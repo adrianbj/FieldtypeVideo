@@ -1,0 +1,194 @@
+<?php
+
+/**
+ * ProcessWire Phone Inputfieldtype
+ * by Adrian Jones
+ *
+ * ProcessWire 2.x
+ * Copyright (C) 2010 by Ryan Cramer
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ *
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ *
+ */
+
+class InputfieldVideo extends InputfieldFile {
+
+    public static function getModuleInfo() {
+        return array(
+            'title' => __('Video Inputfield', __FILE__), // Module Title
+            'summary' => __('Inputfield for uploading video files and creating poster images.', __FILE__), // Module Summary
+            'version' => 1,
+            'author' => 'Adrian Jones',
+            'href' => '',
+            'requires' => array("FieldtypeVideo")
+        );
+    }
+
+
+
+    public function init() {
+        parent::init();
+        $this->set('extensions', 'mp4');
+        $this->set('adminThumbs', false);
+        $this->set('maxWidth', '');
+        $this->set('maxHeight', '');
+        $this->set('adminThumbHeight', 100);
+        $this->set('itemClass', 'InputfieldFile InputfieldImage InputfieldVideo ui-widget');
+        //$this->modules->get("InputfieldFile"); // force the JS and CSS from InputfieldFile to also be loaded
+        $this->modules->get("JqueryFancybox");
+    }
+
+    public function ___render() {
+        $this->config->scripts->add($this->config->urls->InputfieldFile . "InputfieldFile.js");
+        $this->config->styles->add($this->config->urls->InputfieldFile . "InputfieldFile.css");
+        return parent::___render();
+    }
+
+    /**
+     * Resize images to max width/height if specified in field config and image is larger than max
+     *
+     */
+    protected function ___fileAdded(Pagefile $pagefile) {
+
+        /*$filename = $pagefile->filename;
+        $pagefile2 = null;
+
+        if($this->maxWidth && $pagefile->width > $this->maxWidth) {
+            $pagefile2 = $pagefile->width($this->maxWidth);
+            unlink($pagefile->filename);
+            rename($pagefile2->filename, $pagefile->filename);
+            $pagefile->getImageInfo(true); // force it to reload it's dimensions
+        }
+
+        if($this->maxHeight && $pagefile->height > $this->maxHeight) {
+            $pagefile2 = $pagefile->height($this->maxHeight);
+            unlink($pagefile->filename);
+            rename($pagefile2->filename, $pagefile->filename);
+            $pagefile->getImageInfo(true);
+        }
+
+        if($pagefile2) {
+            $this->message($this->_("Image resized to fit maximum allowed dimensions") . " ({$this->maxWidth}x{$this->maxHeight}");
+        }*/
+
+        $img = htmlspecialchars(str_replace('.mp4','.jpg',$pagefile->filename));
+        //$imgfull = appendFilename($img, '-full');
+
+        $media = new ffmpeg_movie ($pagefile->filename);
+        //$frame_count = $media->getFrameCount();
+        //$frame = $media->getFrame(round($frame_count / 2));
+        $frame = $media->getFrame(5);
+        $gd_image = $frame->toGDImage();
+
+        if ($gd_image) {
+            imagejpeg($gd_image, $img, 83);
+            imagedestroy($gd_image);
+            //make_thumb($imgfull,$img,100);
+        }
+
+        return parent::___fileAdded($pagefile);
+    }
+
+    protected function ___renderItem($pagefile, $id, $n) {
+
+        $video = $pagefile;
+
+        if($video->filename) {
+            $media = new ffmpeg_movie ($video->filename);
+            //$duration = secs_to_string_compact($media->getDuration());
+            $duration = gmdate("H:i:s", $media->getDuration());
+        }
+
+        $thumb_path = str_replace('mp4', 'jpg', $video->filename);
+        $thumb_url = str_replace('mp4', 'jpg', $video->url);
+
+        list($width, $height, $type, $attr) = getimagesize($thumb_path);
+
+        if($this->adminThumbs && $height > $this->adminThumbHeight) {
+            // create a variation for display with this inputfield
+            $this->make_thumb($thumb_path, $this->appendFilename($thumb_path, '-thumb'), $this->adminThumbHeight);
+        }
+
+        $out =  "\n\t\t<p class='InputfieldFileInfo ui-widget ui-widget-header'>" .
+            "\n\t\t\t<span class='ui-icon ui-icon-arrowthick-2-n-s'></span>" .
+            "\n\t\t\t<span class='InputfieldFileName'>{$pagefile->basename}</span> " .
+            "\n\t\t\t<span class='InputfieldFileStats'>&bull; {$pagefile->filesizeStr} &bull; {$duration}</span> " .
+            "\n\t\t\t<label class='InputfieldFileDelete'><input type='checkbox' name='delete_$id' value='1' /><span class='ui-icon ui-icon-trash'>Delete</span></label>" .
+            "\n\t\t\t<a class='InputfieldFileMove InputfieldFileMoveBottom' href='#'><span class='ui-icon ui-icon-arrowthickstop-1-s'></span></a> " .
+            "\n\t\t\t<a class='InputfieldFileMove InputfieldFileMoveTop' href='#'><span class='ui-icon ui-icon-arrowthickstop-1-n'></span></a> " .
+            "\n\t\t</p>" .
+            "\n\t\t<p class='InputfieldFileData ui-widget ui-widget-content'>" .
+            "\n\t\t\t<a class='InputfieldFileLink' target='_blank' href='{$pagefile->url}'><img src='".$this->appendFilename($thumb_url, '-thumb')."' alt='{$pagefile->basename}' /></a>" .
+            "\n\t\t\t" . $this->renderItemDescriptionField($pagefile, $id, $n) .
+            "\n\t\t\t<input class='InputfieldFileSort' type='text' name='sort_$id' value='$n' />" .
+            "\n\t\t</p>";
+
+        return $out;
+    }
+
+    public function ___getConfigInputfields() {
+
+        $inputfields = parent::___getConfigInputfields();
+
+        $field = $this->modules->get('InputfieldCheckbox');
+        $field->attr('name', 'adminThumbs');
+        $field->attr('value', 1);
+        $field->attr('checked', $this->adminThumbs ? 'checked' : '');
+        $field->label = $this->_('Display thumbnails in page editor?');
+        $field->description = $this->_('Thumbnails take up less space and make it easier to sort multiple images. If unchecked, the full (original) size image will be shown in the page editor.'); // Display thumbnails description
+        $inputfields->add($field);
+
+        $fieldset = $this->modules->get('InputfieldFieldset');
+        $fieldset->label = $this->_("Max Image Dimensions");
+        $fieldset->collapsed = $this->maxWidth || $this->maxHeight ? Inputfield::collapsedNo : Inputfield::collapsedYes;
+        $fieldset->description = $this->_("Optionally enter the max width and/or height of uploaded images. If specified, images will be resized at upload time when they exceed either the max width or height. The resize is performed at upload time, and thus does not affect any images in the system, or images added via the API."); // Max image dimensions description
+
+        $field = $this->modules->get("InputfieldInteger");
+        $field->attr('name', 'maxWidth');
+        $field->attr('value', $this->maxWidth ? (int) $this->maxWidth : '');
+        $field->label = $this->_("Max width for uploaded images");
+        $field->description = $this->_("Enter the value in number of pixels or leave blank for no max."); // Max width description
+        $fieldset->add($field);
+
+        $field = $this->modules->get("InputfieldInteger");
+        $field->attr('name', 'maxHeight');
+        $field->attr('value', $this->maxHeight ? (int) $this->maxHeight : '');
+        $field->label = $this->_("Max height for uploaded images");
+        $field->description = $this->_("Enter the value in number of pixels or leave blank for no max.");  // Max height description
+        $fieldset->add($field);
+
+        $inputfields->add($fieldset);
+
+        return $inputfields;
+    }
+
+
+        public function make_thumb($src, $dest, $desired_height) {
+
+          /* read the source image */
+          $source_image = imagecreatefromjpeg($src);
+          $width = imagesx($source_image);
+          $height = imagesy($source_image);
+
+          /* find the "desired height" of this thumbnail, relative to the desired width  */
+          $desired_width = floor($width * ($desired_height / $height));
+
+          /* create a new, "virtual" image */
+          $virtual_image = imagecreatetruecolor($desired_width, $desired_height);
+
+          /* copy source image at a resized size */
+          imagecopyresampled($virtual_image, $source_image, 0, 0, 0, 0, $desired_width, $desired_height, $width, $height);
+
+          /* create the physical thumbnail image to its destination */
+          imagejpeg($virtual_image, $dest, 83);
+        }
+
+
+        public function appendFilename($file, $suffix){
+            $path_parts = pathinfo($file);
+            return $path_parts['dirname'] . '/' . $path_parts['filename'] . $suffix . '.' . $path_parts['extension'];
+        }
+
+}
