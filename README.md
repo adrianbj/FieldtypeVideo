@@ -20,7 +20,7 @@ With this module, they can simply upload the video and the template makes use of
 ```
 
 ###Requirements
-The module requires ffmpeg and ffmpeg-php, although I can make the latter optional fairly easily.
+The module requires ffmpeg and ffmpeg-php, although I can make the latter optional fairly easily. I don't have any requirement checking implemented yet, so if you don't have these, you'll get php errors.
 
 
 ###Possible future enhancements
