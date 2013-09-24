@@ -32,4 +32,5 @@ The module requires ffmpeg and ffmpeg-php, although I can make the latter option
 
 My biggest concern, is how useful this will be to people - how many hosts actually have ffmpeg setup? Do any have ffmpeg-php?
 
-Anyone have any ideas for features they'd like to see?
+Discussion:
+http://processwire.com/talk/topic/4580-video-fieldtype/
