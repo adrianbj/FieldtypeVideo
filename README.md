@@ -15,7 +15,9 @@ It also shows the duration of the video on the title bar, next to the filesize.
 I had to put this together quickly for an existing site as they wanted to start adding videos that needed to be private, so I am using mediaelementjs.
 
 With this module, they can simply upload the video and the template makes use of:
+```
 <video src="{$page->video_field->url}" poster="{$page->video_field->poster}" width="720" height="408" ></video>
+```
 
 NB: Requirements
 The module requires ffmpeg and ffmpeg-php, although I can make the latter optional fairly easily.
