@@ -19,11 +19,11 @@ With this module, they can simply upload the video and the template makes use of
 <video src="{$page->video_field->url}" poster="{$page->video_field->poster}" width="720" height="408" ></video>
 ```
 
-NB: Requirements
+###Requirements
 The module requires ffmpeg and ffmpeg-php, although I can make the latter optional fairly easily.
 
 
-Possible future enhancements
+###Possible future enhancements
 Ability to specify what frame is used for the poster - either by number, and/or by offering several options to choose from
 Push poster image to a dedicated image field
 Field for pasting in or uploading closed captions
