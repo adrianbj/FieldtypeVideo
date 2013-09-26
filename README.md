@@ -24,8 +24,6 @@ The module requires ffmpeg and ffmpeg-php, although I can make the latter option
 
 
 ###Possible future enhancements
-* Ability to specify what frame is used for the poster - either by number, and/or by offering several options to choose from
-* Push poster image to a dedicated image field
 * Field for pasting in or uploading closed captions
 * Support for uploading multiple formats of the same video (mp4, webm, etc) and/or automated video format conversion
 * Integrate mediaelementjs into the module so users can enter shortcodes in RTE fields to display videos where they want
