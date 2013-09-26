@@ -22,7 +22,7 @@ class FieldtypeVideo extends FieldtypeFile {
         return array(
             'title' => __('Video Fieldtype', __FILE__), // Module Title
             'summary' => __('Fieldtype for uploading video files and creating poster images.', __FILE__), // Module Summary
-            'version' => 3,
+            'version' => 4,
             'author' => 'Adrian Jones',
             'href' => '',
             'installs' => 'InputfieldVideo'
@@ -133,9 +133,31 @@ class FieldtypeVideo extends FieldtypeFile {
                 //$v->poster = str_replace('mp4','jpg',$v->url);
                 $v->poster = pathinfo($v->url, PATHINFO_DIRNAME) . '/' . $v->poster;
                 //$v->subtitles = pathinfo($v->url, PATHINFO_DIRNAME) . '/' . $v->subtitles;
+
+                $transcript_items = explode("\r\n", $v->subtitles);
+
+                $i=0;
+                foreach ($transcript_items as $key => $line) {
+
+                    if($i==0 || $i==1 || $last_line == '' || $prev_last_line == ''){
+                        unset($transcript_items[$key]);
+                    }
+
+                    $prev_last_line = $last_line;
+                    $last_line = $line;
+
+                    $i++;
+                }
+
+
+                $v->transcript = implode("<br />", $transcript_items);
+
+
                 $v->subtitles = str_replace('mp4','srt',$v->url);
                 $v->formatted = true;
             }
+
+
         //}
 
         if($field->maxFiles == 1) {

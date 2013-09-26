@@ -7,10 +7,11 @@ Processwire field type for storing video files and automatically creating poster
 
 I have made a very basic/rough start on a video fieldtype. It extends FieldtypeFile.
 
-The reason I think it is a useful addition is that it automatically creates a poster image of the video on upload and makes this available via:
-$page->video_field->poster
+It automatically creates a poster image of the video on upload and makes this available via: $page->video_field->poster
 
-It also shows the duration of the video on the title bar, next to the filesize.
+It shows the duration of the video on the title bar, next to the filesize.
+
+It also handles SRT subtitles and conversion to a formatted transcript.
 
 I had to put this together quickly for an existing site as they wanted to start adding videos that needed to be private, so I am using mediaelementjs.
 

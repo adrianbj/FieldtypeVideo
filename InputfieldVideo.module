@@ -19,7 +19,7 @@ class InputfieldVideo extends InputfieldFile {
         return array(
             'title' => __('Video Inputfield', __FILE__), // Module Title
             'summary' => __('Inputfield for uploading video files and creating poster images.', __FILE__), // Module Summary
-            'version' => 3,
+            'version' => 4,
             'author' => 'Adrian Jones',
             'href' => '',
             'requires' => array("FieldtypeVideo")
@@ -186,6 +186,7 @@ class InputfieldVideo extends InputfieldFile {
         "\n\t\t\t" . $this->renderItemDescriptionField($pagefile, $id, $n) .
         "\n\t\t<br /><label class='InputfieldFileDescription'><span class='detail'>Subtitles</span>" .
         "\n\t\t" . ($this->user->isSuperuser() ? '<br /><br />In templates, you can access this subtitles file ('.pathinfo(str_replace('mp4','srt',$pagefile->filename),PATHINFO_BASENAME).') using: <code>$page->'.$this->name.'->'.($this->maxFiles == 1 ? '' : 'eq('.$n.')->').'subtitles</code>' : '') .
+        '<br />In templates you can access a formatted transcript (converted from subtitles entered in SRT format), by using: <code>$page->'.$this->name.'->'.($this->maxFiles == 1 ? '' : 'eq('.$n.')->').'transcript</code>' .
         "\n\t\t<br /><br /><textarea rows='10' name='subtitles_$id' />{$pagefile->subtitles}</textarea>" .
         "\n\t\t\t<input class='InputfieldFileSort' type='text' name='sort_$id' value='$n' />" .
         "\n\t\t</p>";
