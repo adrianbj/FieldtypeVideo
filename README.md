@@ -24,7 +24,7 @@ The module requires ffmpeg and ffmpeg-php, although I can make the latter option
 
 
 ###Possible future enhancements
-* Field for pasting in or uploading closed captions
+* Multi language versions of subtitles
 * Support for uploading multiple formats of the same video (mp4, webm, etc) and/or automated video format conversion
 * Integrate mediaelementjs into the module so users can enter shortcodes in RTE fields to display videos where they want
 

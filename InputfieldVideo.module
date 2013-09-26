@@ -19,7 +19,7 @@ class InputfieldVideo extends InputfieldFile {
         return array(
             'title' => __('Video Inputfield', __FILE__), // Module Title
             'summary' => __('Inputfield for uploading video files and creating poster images.', __FILE__), // Module Summary
-            'version' => 2,
+            'version' => 3,
             'author' => 'Adrian Jones',
             'href' => '',
             'requires' => array("FieldtypeVideo")
@@ -76,40 +76,44 @@ class InputfieldVideo extends InputfieldFile {
             $this->message($this->_("Image resized to fit maximum allowed dimensions") . " ({$this->maxWidth}x{$this->maxHeight}");
         }*/
 
-        $img = htmlspecialchars(str_replace('.mp4','.jpg',$pagefile->filename));
-        //$imgfull = appendFilename($img, '-full');
+        if(pathinfo($pagefile->filename, PATHINFO_EXTENSION) == 'mp4'){
 
-        $media = new ffmpeg_movie ($pagefile->filename);
-        $frame_count = $media->getFrameCount();
+            $img = htmlspecialchars(str_replace('.mp4','.jpg',$pagefile->filename));
+            //$imgfull = appendFilename($img, '-full');
 
-        $frame_number = 0;
-        $frames = array();
-        $fraction = (1/$this->numPosterImages);
-        $frame_number = $frame_number + $fraction;
-        for ($i = 1; $i <= $this->numPosterImages; $i++) {
-            $frames[] = round($frame_count * $frame_number / 2);
-        }
+            $media = new ffmpeg_movie ($pagefile->filename);
+            $frame_count = $media->getFrameCount();
 
-
-        $i=1;
-        foreach($frames as $frame){
-
-            $img = $this->appendFilename(htmlspecialchars(str_replace('.mp4','.jpg',$pagefile->filename)), '-'.$i);
-
-            if(!file_exists($img)){
-
-                $selected_frame = $media->getFrame($frame);
-                $gd_image = $selected_frame->toGDImage();
-
-                if ($gd_image) {
-                    imagejpeg($gd_image, $img, 83);
-                    imagedestroy($gd_image);
-                    //make_thumb($imgfull,$img,100);
-                }
-
+            $frame_number = 0;
+            $frames = array();
+            $fraction = (1/$this->numPosterImages);
+            $frame_number = $frame_number + $fraction;
+            for ($i = 1; $i <= $this->numPosterImages; $i++) {
+                $frames[] = round($frame_count * $frame_number / 2);
             }
 
-            $i++;
+
+            $i=1;
+            foreach($frames as $frame){
+
+                $img = $this->appendFilename(htmlspecialchars(str_replace('.mp4','.jpg',$pagefile->filename)), '-'.$i);
+
+                if(!file_exists($img)){
+
+                    $selected_frame = $media->getFrame($frame);
+                    $gd_image = $selected_frame->toGDImage();
+
+                    if ($gd_image) {
+                        imagejpeg($gd_image, $img, 83);
+                        imagedestroy($gd_image);
+                        //make_thumb($imgfull,$img,100);
+                    }
+
+                }
+
+                $i++;
+
+            }
 
         }
 
@@ -121,13 +125,11 @@ class InputfieldVideo extends InputfieldFile {
 
         $video = $pagefile;
 
-        if($video->filename) {
-            $media = new ffmpeg_movie ($video->filename);
-            //$duration = secs_to_string_compact($media->getDuration());
-            $duration = gmdate("H:i:s", $media->getDuration());
-        }
+        $duration = '';
 
-        if($this->user->isSuperuser()) error_log('SUPER');
+        $media = new ffmpeg_movie ($video->filename);
+        //$duration = secs_to_string_compact($media->getDuration());
+        $duration = gmdate("H:i:s", $media->getDuration());
 
 
         $out =  "\n\t\t<p class='InputfieldFileInfo ui-widget ui-widget-header'>" .
@@ -137,9 +139,11 @@ class InputfieldVideo extends InputfieldFile {
         "\n\t\t\t<label class='InputfieldFileDelete'><input type='checkbox' name='delete_$id' value='1' /><span class='ui-icon ui-icon-trash'>Delete</span></label>" .
         "\n\t\t\t<a class='InputfieldFileMove InputfieldFileMoveBottom' href='#'><span class='ui-icon ui-icon-arrowthickstop-1-s'></span></a> " .
         "\n\t\t\t<a class='InputfieldFileMove InputfieldFileMoveTop' href='#'><span class='ui-icon ui-icon-arrowthickstop-1-n'></span></a> " .
-        "\n\t\t</p>" .
-        "\n\t\t\n\t\t<p class='InputfieldFileData ui-widget ui-widget-content'>Video Poster " . ($this->numPosterImages > 1 ? "(select the image you want to use for the video poster / cover)<br /><br />" : "") .
-        "\n\t\t" . ($this->user->isSuperuser() ? '<br /><br />In templates, you can access ' . ($this->numPosterImages > 1 ? "the selected" : "this") . ' poster using: <code>$page->'.$this->name.'->poster</code>' : '');
+        "\n\t\t</p>";
+
+
+        $out .="\n\t\t\n\t\t<p class='InputfieldFileData ui-widget ui-widget-content'>Video Poster " . ($this->numPosterImages > 1 ? "(select the image you want to use for the video poster / cover)<br /><br />" : "") .
+        "\n\t\t" . ($this->user->isSuperuser() ? '<br /><br />In templates, you can access ' . ($this->numPosterImages > 1 ? "the selected" : "this") . ' poster image ('.pathinfo(str_replace('mp4','jpg',$pagefile->filename),PATHINFO_BASENAME).') using: <code>$page->'.$this->name.'->'.($this->maxFiles == 1 ? '' : 'eq('.$n.')->').'poster</code>' : '');
 
         for ($i = 1; $i <= $this->numPosterImages; $i++) {
 
@@ -148,6 +152,7 @@ class InputfieldVideo extends InputfieldFile {
 
             $thumb_path = $this->appendFilename($poster_path, '-thumb');
             $thumb_url = $this->appendFilename($poster_url, '-thumb');
+
 
             list($width, $height, $type, $attr) = getimagesize($poster_path);
 
@@ -179,6 +184,9 @@ class InputfieldVideo extends InputfieldFile {
 
         $out .= "" .
         "\n\t\t\t" . $this->renderItemDescriptionField($pagefile, $id, $n) .
+        "\n\t\t<br /><label class='InputfieldFileDescription'><span class='detail'>Subtitles</span>" .
+        "\n\t\t" . ($this->user->isSuperuser() ? '<br /><br />In templates, you can access this subtitles file ('.pathinfo(str_replace('mp4','srt',$pagefile->filename),PATHINFO_BASENAME).') using: <code>$page->'.$this->name.'->'.($this->maxFiles == 1 ? '' : 'eq('.$n.')->').'subtitles</code>' : '') .
+        "\n\t\t<br /><br /><textarea rows='10' name='subtitles_$id' />{$pagefile->subtitles}</textarea>" .
         "\n\t\t\t<input class='InputfieldFileSort' type='text' name='sort_$id' value='$n' />" .
         "\n\t\t</p>";
 
@@ -193,7 +201,7 @@ class InputfieldVideo extends InputfieldFile {
         $id = $this->name . '_' . $pagefile->hash;
         $changed = false;
 
-        foreach(array('description', 'tags', 'poster') as $key) {
+        foreach(array('description', 'tags', 'poster', 'subtitles') as $key) {
             if(isset($input[$key . '_' . $id])) {
                 $value = trim($input[$key . '_' . $id]);
                 if($value != $pagefile->$key) {
@@ -202,6 +210,9 @@ class InputfieldVideo extends InputfieldFile {
                 }
             }
         }
+
+        //write subtitles to a file that can be used by video player - currently only supporting srt. Should make format optional, as well as add multi-language files
+        if($pagefile->subtitles != '') file_put_contents(str_replace('mp4','srt',$pagefile->filename) , $pagefile->subtitles);
 
         if(isset($input['delete_' . $id])) {
             $this->processInputDeleteFile($pagefile);
