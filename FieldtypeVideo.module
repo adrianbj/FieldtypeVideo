@@ -22,7 +22,7 @@ class FieldtypeVideo extends FieldtypeFile {
         return array(
             'title' => __('Video Fieldtype', __FILE__), // Module Title
             'summary' => __('Fieldtype for uploading video files and creating poster images.', __FILE__), // Module Summary
-            'version' => 4,
+            'version' => 5,
             'author' => 'Adrian Jones',
             'href' => '',
             'installs' => 'InputfieldVideo'
@@ -137,6 +137,8 @@ class FieldtypeVideo extends FieldtypeFile {
                 $transcript_items = explode("\r\n", $v->subtitles);
 
                 $i=0;
+                $last_line = '';
+                $prev_last_line = '';
                 foreach ($transcript_items as $key => $line) {
 
                     if($i==0 || $i==1 || $last_line == '' || $prev_last_line == ''){
