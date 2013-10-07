@@ -3,21 +3,19 @@ FieldtypeVideo
 
 Processwire field type for storing video files and automatically creating poster images
 
-##This is a very rough draft of this module - it works, but needs lots of cleaning up and enhancing!
+##It works, but I still want to clean up and enhance it!
 
-I have made a very basic/rough start on a video fieldtype. It extends FieldtypeFile.
+This new video fieldtype extends FieldtypeFile.
+* the video is available via: $page->video_field->url
+* automatically creates a poster image of the video on upload and makes this available via: $page->video_field->poster
+* shows the duration of the video on the title bar, next to the filesize
+* Stores SRT files for subtitles accessed via: $page->video_field->subtitles
+* Formats a transcript from the subtitles, accessed via: $page->video_field->transcript
 
-It automatically creates a poster image of the video on upload and makes this available via: $page->video_field->poster
+I am using mediaelementjs to display the videos, so editing users can easily upload videos and enter SRT files. The following code is used in the template file. You can adjust this if you'd prefer using VideoJS or some other HTML5 player.
 
-It shows the duration of the video on the title bar, next to the filesize.
-
-It also handles SRT subtitles and conversion to a formatted transcript.
-
-I had to put this together quickly for an existing site as they wanted to start adding videos that needed to be private, so I am using mediaelementjs.
-
-With this module, they can simply upload the video and the template makes use of:
 ```
-<video src="{$page->video_field->url}" poster="{$page->video_field->poster}" width="720" height="408" ></video>
+<video src='{$page->video_field->eq(1)->url}' poster='{$page->video_field->eq(1)->poster}' width='720' height='408' ><track kind='subtitles' src='{$page->video_field->eq(1)->subtitles}' srclang='en' /></video>
 ```
 
 ###Requirements
