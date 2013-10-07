@@ -3,9 +3,8 @@ FieldtypeVideo
 
 Processwire field type for storing video files and automatically creating poster images
 
-##It works, but I still want to clean up and enhance it!
+###This new video fieldtype extends FieldtypeFile.
 
-This new video fieldtype extends FieldtypeFile.
 * the video is available via: $page->video_field->url
 * automatically creates a poster image of the video on upload and makes this available via: $page->video_field->poster
 * shows the duration of the video on the title bar, next to the filesize
