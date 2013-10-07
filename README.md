@@ -5,9 +5,9 @@ Processwire field type for storing video files and automatically creating poster
 
 ###This new video fieldtype extends FieldtypeFile.
 
-* the video is available via: $page->video_field->url
-* automatically creates a poster image of the video on upload and makes this available via: $page->video_field->poster
-* shows the duration of the video on the title bar, next to the filesize
+* Video is available via: $page->video_field->url
+* Module automatically creates a poster image of the video on upload and makes this available via: $page->video_field->poster
+* Shows the duration of the video on the title bar, next to the filesize
 * Stores SRT files for subtitles accessed via: $page->video_field->subtitles
 * Formats a transcript from the subtitles, accessed via: $page->video_field->transcript
 
