@@ -26,7 +26,6 @@ The module requires ffmpeg and ffmpeg-php, although I can make the latter option
 * Support for uploading multiple formats of the same video (mp4, webm, etc) and/or automated video format conversion
 * Integrate mediaelementjs into the module so users can enter shortcodes in RTE fields to display videos where they want
 
-My biggest concern, is how useful this will be to people - how many hosts actually have ffmpeg setup? Do any have ffmpeg-php?
 
 Discussion:
 http://processwire.com/talk/topic/4580-video-fieldtype/
