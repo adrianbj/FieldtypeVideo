@@ -19,7 +19,7 @@ class InputfieldVideo extends InputfieldFile {
         return array(
             'title' => __('Video Inputfield', __FILE__), // Module Title
             'summary' => __('Inputfield for uploading video files and creating poster images.', __FILE__), // Module Summary
-            'version' => 6,
+            'version' => 8,
             'author' => 'Adrian Jones',
             'href' => '',
             'requires' => array("FieldtypeVideo")
@@ -50,31 +50,10 @@ class InputfieldVideo extends InputfieldFile {
     }
 
     /**
-     * Resize images to max width/height if specified in field config and image is larger than max
+     * Create poster image(s)
      *
      */
     protected function ___fileAdded(Pagefile $pagefile) {
-
-        /*$filename = $pagefile->filename;
-        $pagefile2 = null;
-
-        if($this->maxWidth && $pagefile->width > $this->maxWidth) {
-            $pagefile2 = $pagefile->width($this->maxWidth);
-            unlink($pagefile->filename);
-            rename($pagefile2->filename, $pagefile->filename);
-            $pagefile->getImageInfo(true); // force it to reload it's dimensions
-        }
-
-        if($this->maxHeight && $pagefile->height > $this->maxHeight) {
-            $pagefile2 = $pagefile->height($this->maxHeight);
-            unlink($pagefile->filename);
-            rename($pagefile2->filename, $pagefile->filename);
-            $pagefile->getImageInfo(true);
-        }
-
-        if($pagefile2) {
-            $this->message($this->_("Image resized to fit maximum allowed dimensions") . " ({$this->maxWidth}x{$this->maxHeight}");
-        }*/
 
         if(pathinfo($pagefile->filename, PATHINFO_EXTENSION) == 'mp4'){
 
@@ -88,8 +67,9 @@ class InputfieldVideo extends InputfieldFile {
             $frames = array();
             $fraction = (1/$this->numPosterImages);
             $frame_number = $frame_number + $fraction;
-            for ($i = 1; $i <= $this->numPosterImages; $i++) {
-                $frames[] = round($frame_count * $frame_number / 2);
+            for ($frame_number = 1; $frame_number <= $this->numPosterImages; $frame_number++) {
+                $frames[] = round($frame_count * $frame_number / 10);
+                //error_log(round($frame_count * $frame_number / 10));
             }
 
 
@@ -142,8 +122,8 @@ class InputfieldVideo extends InputfieldFile {
         "\n\t\t</p>";
 
 
-        $out .="\n\t\t\n\t\t<p class='InputfieldFileData ui-widget ui-widget-content'>Video Poster " . ($this->numPosterImages > 1 ? "(select the image you want to use for the video poster / cover)<br /><br />" : "") .
-        "\n\t\t" . ($this->user->isSuperuser() ? '<br /><br />In templates, you can access ' . ($this->numPosterImages > 1 ? "the selected" : "this") . ' poster image ('.pathinfo(str_replace('mp4','jpg',$pagefile->filename),PATHINFO_BASENAME).') using: <code>$page->'.$this->name.'->'.($this->maxFiles == 1 ? '' : 'eq('.$n.')->').'poster</code>' : '');
+        $out .="\n\t\t\n\t\t<p class='InputfieldFileData ui-widget ui-widget-content'>Video Poster " . ($this->numPosterImages > 1 ? "(select the image you want to use for the video poster / cover)" : "") .
+        "\n\t\t" . ($this->user->isSuperuser() ? '<br /><br />In templates, you can access ' . ($this->numPosterImages > 1 ? "the selected" : "this") . ' poster image ('.pathinfo(str_replace('mp4','jpg',$pagefile->filename),PATHINFO_BASENAME).') using: <code>$page->'.$this->name.'->'.($this->maxFiles == 1 ? '' : 'eq('.$n.')->').'poster</code>' : '') . '<br /><br />';
 
         for ($i = 1; $i <= $this->numPosterImages; $i++) {
 
@@ -261,11 +241,19 @@ class InputfieldVideo extends InputfieldFile {
         $field->description = $this->_('This will create a copy of the poster images in an image field of your choice. NB This is not necessary for accessing the image.');
         $inputfields->add($field);
 
-        $field = $this->modules->get("InputfieldText");
+        $field = $this->modules->get("InputfieldSelect");
         $field->attr('name', 'imageField');
         $field->attr('value', $this->imageField);
-        $field->label = $this->_("Name of the field that you want to have the poster image copied into");
+        $field->label = $this->_("Field that you want to have the poster image copied into");
         $field->description = $this->_("This is only relevant if you have the checkbox above checked.");
+        $field->addOption('');
+        // populate with all available fields
+        foreach(wire('fields') as $fieldoption) {
+            // filter out incompatible field types
+            if($fieldoption->type == "FieldtypeImage")  $field->addOption($fieldoption->name);
+        }
+        if(isset($data['videoImagesField'])) $f->value = $data['videoImagesField'];
+        //$f->notes = __("");
         $inputfields->add($field);
 
         $fieldset = $this->modules->get('InputfieldFieldset');
