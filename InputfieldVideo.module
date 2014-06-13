@@ -19,9 +19,10 @@ class InputfieldVideo extends InputfieldFile {
         return array(
             'title' => __('Video Inputfield', __FILE__), // Module Title
             'summary' => __('Inputfield for uploading video files and creating poster images.', __FILE__), // Module Summary
-            'version' => 8,
+            'version' => 10,
             'author' => 'Adrian Jones',
             'href' => '',
+            'icon'     => 'file-video-o',
             'requires' => array("FieldtypeVideo")
         );
     }
