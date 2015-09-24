@@ -22,7 +22,7 @@ class FieldtypeVideo extends FieldtypeFile implements Module, ConfigurableModule
         return array(
             'title' => __('Video Fieldtype', __FILE__), // Module Title
             'summary' => __('Fieldtype for uploading video files and creating poster images.', __FILE__), // Module Summary
-            'version' => 10,
+            'version' => 11,
             'author' => 'Adrian Jones',
             'href' => '',
             'installs' => 'InputfieldVideo',
@@ -33,7 +33,13 @@ class FieldtypeVideo extends FieldtypeFile implements Module, ConfigurableModule
 
     protected static $configDefaults = array(
         // global
-        "sublime_video_token" => ""
+        'player_scripts' => '<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mediaelement/2.18.1/mediaelement.min.js"></script>',
+        'player_code' => '
+        <video width="{width}" height="{height}" poster="{poster}" controls="controls" preload="none">
+            <source type="video/mp4" src="{url}" />
+            <track kind="subtitles" src="{subtitles}" srclang="en" />
+        </video>
+        '
     );
 
     /**
@@ -54,8 +60,7 @@ class FieldtypeVideo extends FieldtypeFile implements Module, ConfigurableModule
         // don't add this to the admin pages
         if($page->template == 'admin') return;
 
-        $additionalHeadScripts = '<script type="text/javascript" src="//cdn.sublimevideo.net/js/'.$this->sublime_video_token.'.js"></script>';
-        $event->return = str_replace("</head>", $additionalHeadScripts.'</head>', $event->return);
+        $event->return = str_replace("</head>", $this->player_scripts.'</head>', $event->return);
     }
 
         /**
@@ -146,7 +151,7 @@ class FieldtypeVideo extends FieldtypeFile implements Module, ConfigurableModule
      *
      * If the maxFiles setting is 1, then we format the value to dereference as single Pagefile rather than a PagefilesArray
      *
-     * This methos is only used when $page->outputFormatting is true.
+     * This method is only used when $page->outputFormatting is true.
      *
      */
     public function ___formatValue(Page $page, Field $field, $value) {
@@ -186,10 +191,11 @@ class FieldtypeVideo extends FieldtypeFile implements Module, ConfigurableModule
 
                 list($width, $height) = getimagesize($this->page->filesManager()->path() . basename($v->poster));
 
-                $v->play = '<video class="sublime" width="'.$width.'" height="'.$height.'" title="'.$v->description.'" poster="'.$v->poster.'" preload="none">
-                                <source src="'.$v->url.'" />';
-                                if(file_exists($this->page->filesManager()->path() . basename($v->subtitles))) $v->play .= '<track src="'.$v->subtitles.'" srclang="en" />';
-                $v->play .= "\n</video>";
+                $search  = array('{url}', '{poster}', '{width}', '{height}', '{description}', '{subtitles}');
+                $replace = array($v->url, $v->poster, $width, $height, $v->description. $v->subtitles);
+                $play_code = str_replace($search, $replace, $this->player_code);
+
+                $v->play = $play_code;
 
                 $v->formatted = true;
             }
@@ -344,16 +350,26 @@ public function getDatabaseSchema(Field $field) {
 
         $inputfields = new InputfieldWrapper();
 
-        $f = $modules->get("InputfieldText");
-        $f->attr('name', 'sublime_video_token');
-        $f->attr('value', $data["sublime_video_token"]);
-        $f->attr('size', 20);
-        $f->label = __('Sublime Video Token');
-        $f->description = __('Your token from Sublime Video.');
+        $f = $modules->get("InputfieldTextarea");
+        $f->attr('name', 'player_scripts');
+        $f->attr('value', $data["player_scripts"]);
+        $f->label = __('Links to required scripts');
+        $f->description = __('These can be local or to a CDN. By default, this module uses MediaElementJS.');
+        $inputfields->add($f);
+
+        $f = $modules->get("InputfieldTextarea");
+        $f->attr('name', 'player_code');
+        $f->attr('value', $data["player_code"]);
+        $f->label = __('Player code');
+        $f->description = __('For more mediaelementjs options see: http://mediaelementjs.com/ Alternatively you might want to use VideoJS or JWPlayer.');
         $inputfields->add($f);
 
         return $inputfields;
     }
 
+    public function ___install() {
+        // save default config data on install
+        $this->modules->saveModuleConfigData($this, self::$configDefaults);
+    }
 
 }
