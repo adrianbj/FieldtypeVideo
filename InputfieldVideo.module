@@ -19,7 +19,7 @@ class InputfieldVideo extends InputfieldFile {
         return array(
             'title' => __('Video Inputfield', __FILE__), // Module Title
             'summary' => __('Inputfield for uploading video files and creating poster images.', __FILE__), // Module Summary
-            'version' => 11,
+            'version' => 12,
             'author' => 'Adrian Jones',
             'href' => '',
             'icon'     => 'file-video-o',
@@ -45,6 +45,14 @@ class InputfieldVideo extends InputfieldFile {
     }
 
     public function ___render() {
+
+        // version number
+        $v = $this->getModuleInfo()['version'];
+
+        // add styles and scripts
+        $this->config->scripts->add($this->config->urls->siteModules . '/FieldtypeVideo/image-picker/image-picker.min.js?v=' . $v);
+        $this->config->styles->add($this->config->urls->siteModules . '/FieldtypeVideo/image-picker/image-picker.css?v=' . $v);
+
         $this->config->scripts->add($this->config->urls->InputfieldFile . "InputfieldFile.js");
         $this->config->styles->add($this->config->urls->InputfieldFile . "InputfieldFile.css");
         return parent::___render();
@@ -126,6 +134,7 @@ class InputfieldVideo extends InputfieldFile {
         $out .="\n\t\t\n\t\t<p class='InputfieldFileData ui-widget ui-widget-content'>Video Poster " . ($this->numPosterImages > 1 ? "(select the image you want to use for the video poster / cover)" : "") .
         "\n\t\t" . ($this->user->isSuperuser() ? '<br /><br />In templates, you can access ' . ($this->numPosterImages > 1 ? "the selected" : "this") . ' poster image ('.pathinfo(str_replace('mp4','jpg',$pagefile->filename),PATHINFO_BASENAME).') using: <code>$page->'.$this->name.'->'.($this->maxFiles == 1 ? '' : 'eq('.$n.')->').'poster</code>' : '') . '<br /><br />';
 
+        if($this->numPosterImages > 1) $out .= '<select id="poster_'.$id.'" name="poster_'.$id.'" class="required image-picker show-labels show-html">';
         for ($i = 1; $i <= $this->numPosterImages; $i++) {
 
             $poster_path = $this->appendFilename(str_replace('mp4', 'jpg', $video->filename), '-'.$i);
@@ -152,15 +161,15 @@ class InputfieldVideo extends InputfieldFile {
             }
 
             if($this->numPosterImages > 1) {
-                $out .= "<input type='radio' name='poster_$id' id='poster_$id' value='".pathinfo($poster_path,PATHINFO_BASENAME)."'". ($pagefile->poster == pathinfo($poster_path,PATHINFO_BASENAME) ? "checked" : "") . "/><br /><br />";
+                $out .= "<option data-img-src='".(($this->adminThumbs && ($height > $this->adminThumbHeight)) ? $thumb_url : $poster_url)."' id='poster_$id' value='".pathinfo($poster_path,PATHINFO_BASENAME)."'". ($pagefile->poster == pathinfo($poster_path,PATHINFO_BASENAME) ? "selected" : "") . "></option>";
             }
             else{
-                $out .= "<input type='hidden' name='poster_$id' id='poster_$id' value='".pathinfo($poster_path,PATHINFO_BASENAME)."' /><br /><br />";
+                $out .= "<input type='hidden' name='poster_$id' id='poster_$id' value='".pathinfo($poster_path,PATHINFO_BASENAME)."' />
+                <img class='image_picker_image' src='".(($this->adminThumbs && ($height > $this->adminThumbHeight)) ? $thumb_url : $poster_url)."' alt='{$pagefile->basename}' />";
             }
 
-            $out .= "<a target='_blank' href='{$pagefile->url}'><img src='".(($this->adminThumbs && ($height > $this->adminThumbHeight)) ? $thumb_url : $poster_url)."' alt='{$pagefile->basename}' /></a><br /><br />";
-
         }
+        $out .= "</select><script>$('select.image-picker').imagepicker()</script><style>.InputfieldImage img:hover {cursor:pointer !important;}</style>";
 
 
         $out .= "" .
@@ -245,8 +254,10 @@ class InputfieldVideo extends InputfieldFile {
         $field = $this->modules->get("InputfieldSelect");
         $field->attr('name', 'imageField');
         $field->attr('value', $this->imageField);
+        $field->required = true;
+        $field->showIf="copyToImageField=1";
+        $field->requiredIf="copyToImageField=1";
         $field->label = $this->_("Field that you want to have the poster image copied into");
-        $field->description = $this->_("This is only relevant if you have the checkbox above checked.");
         $field->addOption('');
         // populate with all available fields
         foreach(wire('fields') as $fieldoption) {
