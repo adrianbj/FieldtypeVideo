@@ -22,7 +22,7 @@ class FieldtypeVideo extends FieldtypeFile implements Module, ConfigurableModule
         return array(
             'title' => __('Video Fieldtype', __FILE__), // Module Title
             'summary' => __('Fieldtype for uploading video files and creating poster images.', __FILE__), // Module Summary
-            'version' => 12,
+            'version' => 13,
             'author' => 'Adrian Jones',
             'href' => '',
             'installs' => 'InputfieldVideo',
@@ -33,7 +33,7 @@ class FieldtypeVideo extends FieldtypeFile implements Module, ConfigurableModule
 
     protected static $configDefaults = array(
         // global
-        'player_scripts' => '<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mediaelement/2.18.1/mediaelement.min.js"></script>',
+        'player_scripts' => '<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mediaelement/2.20.1/mediaelement.min.js"></script>',
         'player_code' => '
         <video width="{width}" height="{height}" poster="{poster}" controls="controls" preload="none">
             <source type="video/mp4" src="{url}" />
@@ -158,50 +158,52 @@ class FieldtypeVideo extends FieldtypeFile implements Module, ConfigurableModule
 
         if(!$value instanceof Pagefiles) return $value;
 
-        //if($field->entityEncode) {
-            foreach($value as $k => $v) {
-                if($v->formatted()) continue;
-                $v->description = htmlspecialchars($v->description, ENT_QUOTES, "UTF-8");
-                $v->tags = htmlspecialchars($v->tags, ENT_QUOTES, "UTF-8");
-                //$v->poster = str_replace('mp4','jpg',$v->url);
-                $v->poster = pathinfo($v->url, PATHINFO_DIRNAME) . '/' . $v->poster;
-                //$v->subtitles = pathinfo($v->url, PATHINFO_DIRNAME) . '/' . $v->subtitles;
+        foreach($value as $k => $v) {
+            if($v->formatted()) continue;
+            $v->description = htmlspecialchars($v->description, ENT_QUOTES, "UTF-8");
+            $v->tags = htmlspecialchars($v->tags, ENT_QUOTES, "UTF-8");
+            //$v->poster = str_replace('mp4','jpg',$v->url);
+            $v->poster = pathinfo($v->url, PATHINFO_DIRNAME) . '/' . $v->poster;
+            //$v->subtitles = pathinfo($v->url, PATHINFO_DIRNAME) . '/' . $v->subtitles;
 
-                $transcript_items = explode("\r\n", $v->subtitles);
+            $transcript_items = explode("\r\n", $v->subtitles);
 
-                $i=0;
-                $last_line = '';
-                $prev_last_line = '';
-                foreach ($transcript_items as $key => $line) {
+            $i=0;
+            $last_line = '';
+            $prev_last_line = '';
+            foreach ($transcript_items as $key => $line) {
 
-                    if($i==0 || $i==1 || $last_line == '' || $prev_last_line == ''){
-                        unset($transcript_items[$key]);
-                    }
-
-                    $prev_last_line = $last_line;
-                    $last_line = $line;
-
-                    $i++;
+                if($i==0 || $i==1 || $last_line == '' || $prev_last_line == ''){
+                    unset($transcript_items[$key]);
                 }
 
+                $prev_last_line = $last_line;
+                $last_line = $line;
 
-                $v->transcript = str_replace('<br /><br />','<br />', implode("<br />", $transcript_items));
-
-                $v->subtitles = str_replace('mp4','srt',$v->url);
-
-                list($width, $height) = getimagesize($this->page->filesManager()->path() . basename($v->poster));
-
-                $search  = array('{url}', '{poster}', '{width}', '{height}', '{description}', '{subtitles}');
-                $replace = array($v->url, $v->poster, $width, $height, $v->description. $v->subtitles);
-                $play_code = str_replace($search, $replace, $this->player_code);
-
-                $v->play = $play_code;
-
-                $v->formatted = true;
+                $i++;
             }
 
+            $v->transcript = str_replace('<br /><br />','<br />', implode("<br />", $transcript_items));
+            $v->subtitles = str_replace('mp4','srt',$v->url);
 
-        //}
+            $posterPath = $this->page->filesManager()->path() . basename($v->poster);
+            if(file_exists($posterPath)) {
+                list($width, $height) = getimagesize($posterPath);
+            }
+            else {
+                $width = 480;
+                $height = 320;
+            }
+
+            $search  = array('{url}', '{poster}', '{width}', '{height}', '{description}', '{subtitles}');
+            $replace = array($v->url, $v->poster, $width, $height, $v->description. $v->subtitles);
+            $play_code = str_replace($search, $replace, $this->player_code);
+
+            $v->play = $play_code;
+
+            $v->formatted = true;
+        }
+
 
         if($field->maxFiles == 1) {
             if(count($value)) $value = $value->first();
@@ -362,6 +364,7 @@ public function getDatabaseSchema(Field $field) {
         $f->attr('value', $data["player_code"]);
         $f->label = __('Player code');
         $f->description = __('For more mediaelementjs options see: http://mediaelementjs.com/ Alternatively you might want to use VideoJS or JWPlayer.');
+        $f->notes = __('Use {width}, {height}, {poster}, {url}, {subtitles} as required within the code.');
         $inputfields->add($f);
 
         return $inputfields;

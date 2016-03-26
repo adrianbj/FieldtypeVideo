@@ -19,7 +19,7 @@ class InputfieldVideo extends InputfieldFile {
         return array(
             'title' => __('Video Inputfield', __FILE__), // Module Title
             'summary' => __('Inputfield for uploading video files and creating poster images.', __FILE__), // Module Summary
-            'version' => 12,
+            'version' => 13,
             'author' => 'Adrian Jones',
             'href' => '',
             'icon'     => 'file-video-o',
@@ -66,42 +66,44 @@ class InputfieldVideo extends InputfieldFile {
 
         if(pathinfo($pagefile->filename, PATHINFO_EXTENSION) == 'mp4'){
 
-            $img = htmlspecialchars(str_replace('.mp4','.jpg',$pagefile->filename));
-            //$imgfull = appendFilename($img, '-full');
+            if(class_exists('ffmpeg_movie')) {
+                $img = htmlspecialchars(str_replace('.mp4','.jpg',$pagefile->filename));
+                //$imgfull = appendFilename($img, '-full');
 
-            $media = new ffmpeg_movie ($pagefile->filename);
-            $frame_count = $media->getFrameCount();
+                $media = new ffmpeg_movie ($pagefile->filename);
+                $frame_count = $media->getFrameCount();
 
-            $frame_number = 0;
-            $frames = array();
-            $fraction = (1/$this->numPosterImages);
-            $frame_number = $frame_number + $fraction;
-            for ($frame_number = 1; $frame_number <= $this->numPosterImages; $frame_number++) {
-                $frames[] = round($frame_count * $frame_number / 10);
-                //error_log(round($frame_count * $frame_number / 10));
-            }
-
-
-            $i=1;
-            foreach($frames as $frame){
-
-                $img = $this->appendFilename(htmlspecialchars(str_replace('.mp4','.jpg',$pagefile->filename)), '-'.$i);
-
-                if(!file_exists($img)){
-
-                    $selected_frame = $media->getFrame($frame);
-                    $gd_image = $selected_frame->toGDImage();
-
-                    if ($gd_image) {
-                        imagejpeg($gd_image, $img, 83);
-                        imagedestroy($gd_image);
-                        //make_thumb($imgfull,$img,100);
-                    }
-
+                $frame_number = 0;
+                $frames = array();
+                $fraction = (1/$this->numPosterImages);
+                $frame_number = $frame_number + $fraction;
+                for ($frame_number = 1; $frame_number <= $this->numPosterImages; $frame_number++) {
+                    $frames[] = round($frame_count * $frame_number / 10);
+                    //error_log(round($frame_count * $frame_number / 10));
                 }
 
-                $i++;
 
+                $i=1;
+                foreach($frames as $frame){
+
+                    $img = $this->appendFilename(htmlspecialchars(str_replace('.mp4','.jpg',$pagefile->filename)), '-'.$i);
+
+                    if(!file_exists($img)){
+
+                        $selected_frame = $media->getFrame($frame);
+                        $gd_image = $selected_frame->toGDImage();
+
+                        if ($gd_image) {
+                            imagejpeg($gd_image, $img, 83);
+                            imagedestroy($gd_image);
+                            //make_thumb($imgfull,$img,100);
+                        }
+
+                    }
+
+                    $i++;
+
+                }
             }
 
         }
@@ -116,9 +118,11 @@ class InputfieldVideo extends InputfieldFile {
 
         $duration = '';
 
-        $media = new ffmpeg_movie ($video->filename);
-        //$duration = secs_to_string_compact($media->getDuration());
-        $duration = gmdate("H:i:s", $media->getDuration());
+        if(class_exists('ffmpeg_movie')){
+            $media = new ffmpeg_movie ($video->filename);
+            //$duration = secs_to_string_compact($media->getDuration());
+            $duration = gmdate("H:i:s", $media->getDuration());
+        }
 
 
         $out =  "\n\t\t<p class='InputfieldFileInfo ui-widget ui-widget-header'>" .
@@ -130,47 +134,47 @@ class InputfieldVideo extends InputfieldFile {
         "\n\t\t\t<a class='InputfieldFileMove InputfieldFileMoveTop' href='#'><span class='ui-icon ui-icon-arrowthickstop-1-n'></span></a> " .
         "\n\t\t</p>";
 
+        if(class_exists('ffmpeg_movie')){
+            $out .="\n\t\t\n\t\t<p class='InputfieldFileData ui-widget ui-widget-content'>Video Poster " . ($this->numPosterImages > 1 ? "(select the image you want to use for the video poster / cover)" : "") .
+            "\n\t\t" . ($this->user->isSuperuser() ? '<br /><br />In templates, you can access ' . ($this->numPosterImages > 1 ? "the selected" : "this") . ' poster image ('.pathinfo(str_replace('mp4','jpg',$pagefile->filename),PATHINFO_BASENAME).') using: <code>$page->'.$this->name.'->'.($this->maxFiles == 1 ? '' : 'eq('.$n.')->').'poster</code>' : '') . '<br /><br />';
 
-        $out .="\n\t\t\n\t\t<p class='InputfieldFileData ui-widget ui-widget-content'>Video Poster " . ($this->numPosterImages > 1 ? "(select the image you want to use for the video poster / cover)" : "") .
-        "\n\t\t" . ($this->user->isSuperuser() ? '<br /><br />In templates, you can access ' . ($this->numPosterImages > 1 ? "the selected" : "this") . ' poster image ('.pathinfo(str_replace('mp4','jpg',$pagefile->filename),PATHINFO_BASENAME).') using: <code>$page->'.$this->name.'->'.($this->maxFiles == 1 ? '' : 'eq('.$n.')->').'poster</code>' : '') . '<br /><br />';
+            if($this->numPosterImages > 1) $out .= '<select id="poster_'.$id.'" name="poster_'.$id.'" class="required image-picker show-labels show-html">';
+            for ($i = 1; $i <= $this->numPosterImages; $i++) {
 
-        if($this->numPosterImages > 1) $out .= '<select id="poster_'.$id.'" name="poster_'.$id.'" class="required image-picker show-labels show-html">';
-        for ($i = 1; $i <= $this->numPosterImages; $i++) {
+                $poster_path = $this->appendFilename(str_replace('mp4', 'jpg', $video->filename), '-'.$i);
+                $poster_url = $this->appendFilename(str_replace('mp4', 'jpg', $video->url),  '-'.$i);
 
-            $poster_path = $this->appendFilename(str_replace('mp4', 'jpg', $video->filename), '-'.$i);
-            $poster_url = $this->appendFilename(str_replace('mp4', 'jpg', $video->url),  '-'.$i);
-
-            $thumb_path = $this->appendFilename($poster_path, '-thumb');
-            $thumb_url = $this->appendFilename($poster_url, '-thumb');
+                $thumb_path = $this->appendFilename($poster_path, '-thumb');
+                $thumb_url = $this->appendFilename($poster_url, '-thumb');
 
 
-            list($width, $height, $type, $attr) = getimagesize($poster_path);
+                list($width, $height, $type, $attr) = getimagesize($poster_path);
 
-            if($this->adminThumbs && $height > $this->adminThumbHeight && !file_exists($thumb_path)) {
-                // create a variation for display with this inputfield
-                $this->make_thumb($poster_path, $thumb_path, $this->adminThumbHeight);
+                if($this->adminThumbs && $height > $this->adminThumbHeight && !file_exists($thumb_path)) {
+                    // create a variation for display with this inputfield
+                    $this->make_thumb($poster_path, $thumb_path, $this->adminThumbHeight);
+                }
+
+                if($this->copyToImageField == 1 && $this->imageField != ''){ //if checked and images field supplied in field's Input tab settings, add this image to the defined images field
+                    $original_image = $this->appendFilename(str_replace('mp4', 'jpg', $video->filename),  '-'.$i);
+                    $image_field_version = $this->appendFilename($this->appendFilename(str_replace('mp4', 'jpg', $video->filename),  '-'.$i), '-imagefield');
+                    copy($original_image, $image_field_version);
+                    $current_page = wire('pages')->get((int) $_GET['id']);
+                    $current_page->{$this->imageField}->add($image_field_version);
+                    $current_page->save();
+                }
+
+                if($this->numPosterImages > 1) {
+                    $out .= "<option data-img-src='".(($this->adminThumbs && ($height > $this->adminThumbHeight)) ? $thumb_url : $poster_url)."' id='poster_$id' value='".pathinfo($poster_path,PATHINFO_BASENAME)."'". ($pagefile->poster == pathinfo($poster_path,PATHINFO_BASENAME) ? "selected" : "") . "></option>";
+                }
+                else{
+                    $out .= "<input type='hidden' name='poster_$id' id='poster_$id' value='".pathinfo($poster_path,PATHINFO_BASENAME)."' />
+                    <img class='image_picker_image' src='".(($this->adminThumbs && ($height > $this->adminThumbHeight)) ? $thumb_url : $poster_url)."' alt='{$pagefile->basename}' />";
+                }
+
             }
-
-            if($this->copyToImageField == 1 && $this->imageField != ''){ //if checked and images field supplied in field's Input tab settings, add this image to the defined images field
-                $original_image = $this->appendFilename(str_replace('mp4', 'jpg', $video->filename),  '-'.$i);
-                $image_field_version = $this->appendFilename($this->appendFilename(str_replace('mp4', 'jpg', $video->filename),  '-'.$i), '-imagefield');
-                copy($original_image, $image_field_version);
-                $current_page = wire('pages')->get((int) $_GET['id']);
-                $current_page->{$this->imageField}->add($image_field_version);
-                $current_page->save();
-            }
-
-            if($this->numPosterImages > 1) {
-                $out .= "<option data-img-src='".(($this->adminThumbs && ($height > $this->adminThumbHeight)) ? $thumb_url : $poster_url)."' id='poster_$id' value='".pathinfo($poster_path,PATHINFO_BASENAME)."'". ($pagefile->poster == pathinfo($poster_path,PATHINFO_BASENAME) ? "selected" : "") . "></option>";
-            }
-            else{
-                $out .= "<input type='hidden' name='poster_$id' id='poster_$id' value='".pathinfo($poster_path,PATHINFO_BASENAME)."' />
-                <img class='image_picker_image' src='".(($this->adminThumbs && ($height > $this->adminThumbHeight)) ? $thumb_url : $poster_url)."' alt='{$pagefile->basename}' />";
-            }
-
+            $out .= "</select><script>$('select.image-picker').imagepicker()</script><style>.InputfieldImage img:hover {cursor:pointer !important;}</style>";
         }
-        $out .= "</select><script>$('select.image-picker').imagepicker()</script><style>.InputfieldImage img:hover {cursor:pointer !important;}</style>";
-
 
         $out .= "" .
         "\n\t\t\t" . $this->renderItemDescriptionField($pagefile, $id, $n) .
