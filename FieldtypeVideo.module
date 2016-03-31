@@ -22,7 +22,7 @@ class FieldtypeVideo extends FieldtypeFile implements Module, ConfigurableModule
         return array(
             'title' => __('Video Fieldtype', __FILE__), // Module Title
             'summary' => __('Fieldtype for uploading video files and creating poster images.', __FILE__), // Module Summary
-            'version' => 13,
+            'version' => 14,
             'author' => 'Adrian Jones',
             'href' => '',
             'installs' => 'InputfieldVideo',

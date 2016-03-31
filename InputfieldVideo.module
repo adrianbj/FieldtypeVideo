@@ -19,7 +19,7 @@ class InputfieldVideo extends InputfieldFile {
         return array(
             'title' => __('Video Inputfield', __FILE__), // Module Title
             'summary' => __('Inputfield for uploading video files and creating poster images.', __FILE__), // Module Summary
-            'version' => 13,
+            'version' => 14,
             'author' => 'Adrian Jones',
             'href' => '',
             'icon'     => 'file-video-o',
@@ -47,7 +47,8 @@ class InputfieldVideo extends InputfieldFile {
     public function ___render() {
 
         // version number
-        $v = $this->getModuleInfo()['version'];
+        $moduleInfo = $this->getModuleInfo();
+        $v = $moduleInfo['version'];
 
         // add styles and scripts
         $this->config->scripts->add($this->config->urls->siteModules . '/FieldtypeVideo/image-picker/image-picker.min.js?v=' . $v);
