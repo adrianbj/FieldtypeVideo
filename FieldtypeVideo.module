@@ -22,9 +22,9 @@ class FieldtypeVideo extends FieldtypeFile implements Module, ConfigurableModule
         return array(
             'title' => __('Video Fieldtype', __FILE__), // Module Title
             'summary' => __('Fieldtype for uploading video files and creating poster images.', __FILE__), // Module Summary
-            'version' => 14,
+            'version' => '0.1.5',
             'author' => 'Adrian Jones',
-            'href' => '',
+            'href' => 'https://processwire.com/talk/topic/4580-video-fieldtype/',
             'installs' => 'InputfieldVideo',
             'icon'     => 'file-video-o'
         );
@@ -84,7 +84,9 @@ class FieldtypeVideo extends FieldtypeFile implements Module, ConfigurableModule
                 $pagefile = $this->getBlankPagefile($pagefiles, $v['data']);
                 $pagefile->description = $v['description'];
                 if(isset($v['modified'])) $pagefile->modified = $v['modified'];
-                if(isset($v['created'])) $pagefile->created = $v['created'];
+                // $v['created'] was blank, so setting to modified to ensure video is "published"
+                // this might be a bit of a hack so should revisit later
+                if(isset($v['created'])) $pagefile->created = $v['modified'];
                 if(isset($v['tags'])) $pagefile->tags = $v['tags'];
                 if(isset($v['poster'])) $pagefile->poster = $v['poster'];
                 if(isset($v['subtitles'])) $pagefile->subtitles = $v['subtitles'];
@@ -107,33 +109,33 @@ class FieldtypeVideo extends FieldtypeFile implements Module, ConfigurableModule
          */
         public function ___sleepValue(Page $page, Field $field, $value) {
 
-        $sleepValue = array();
-        if(!$value instanceof Pagefiles) return $sleepValue;
+            $sleepValue = array();
+            if(!$value instanceof Pagefiles) return $sleepValue;
 
-        foreach($value as $pagefile) {
-            $item = array(
-                'data' => $pagefile->basename,
-                'description' => $pagefile->description,
-                'poster' => $pagefile->poster,
-                'subtitles' => $pagefile->subtitles,
-                );
+            foreach($value as $pagefile) {
+                $item = array(
+                    'data' => $pagefile->basename,
+                    'description' => $pagefile->description,
+                    'poster' => $pagefile->poster,
+                    'subtitles' => $pagefile->subtitles,
+                    );
 
-            if($field->fileSchema & self::fileSchemaDate) {
-                $item['modified'] = date('Y-m-d H:i:s', $pagefile->modified);
-                $item['created'] = date('Y-m-d H:i:s', $pagefile->created);
+                if($field->fileSchema & self::fileSchemaDate) {
+                    $item['modified'] = date('Y-m-d H:i:s', $pagefile->modified);
+                    $item['created'] = date('Y-m-d H:i:s', $pagefile->created);
+                }
+
+                if($field->fileSchema & self::fileSchemaTags) {
+                    $item['tags'] = $pagefile->tags;
+                }
+
+                $sleepValue[] = $item;
             }
-
-            if($field->fileSchema & self::fileSchemaTags) {
-                $item['tags'] = $pagefile->tags;
-            }
-
-            $sleepValue[] = $item;
-        }
-        return $sleepValue;
+            return $sleepValue;
         }
 
 
-        public function getBlankValue(Page $page, Field $field) {
+    public function getBlankValue(Page $page, Field $field) {
         $pageimages = new Pageimages($page);
         $pageimages->setTrackChanges(true);
         return $pageimages;
