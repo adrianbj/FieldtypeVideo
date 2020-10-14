@@ -33,7 +33,7 @@ class FieldtypeVideo extends FieldtypeFile implements Module, ConfigurableModule
 
     protected static $configDefaults = array(
         // global
-        'player_scripts' => '<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mediaelement/2.20.1/mediaelement.min.js"></script>',
+        'player_scripts' => '<script src="https://cdnjs.cloudflare.com/ajax/libs/mediaelement/2.20.1/mediaelement.min.js"></script>',
         'player_code' => '
         <video width="{width}" height="{height}" poster="{poster}" controls="controls" preload="none">
             <source type="video/mp4" src="{url}" />
