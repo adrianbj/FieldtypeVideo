@@ -17,7 +17,7 @@ class FieldtypeVideo extends FieldtypeFile implements Module, ConfigurableModule
         return array(
             'title' => __('Video', __FILE__),
             'summary' => __('Fieldtype for uploading video files and creating poster images.', __FILE__),
-            'version' => '0.2.0',
+            'version' => '0.2.1',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/4580-video-fieldtype/',
             'installs' => 'InputfieldVideo',
@@ -143,23 +143,24 @@ class FieldtypeVideo extends FieldtypeFile implements Module, ConfigurableModule
             $v->tags = htmlspecialchars($v->tags, ENT_QUOTES, "UTF-8");
             $v->poster = pathinfo($v->url, PATHINFO_DIRNAME) . '/' . $v->poster;
             $subtitles_file = str_replace('mp4', 'vtt', $v->url);
+            if(file_exists($this->wire('config')->paths->root . $subtitles_file)) {
+                $file_as_array = file($this->wire('config')->paths->root . $subtitles_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                $v->transcript = '';
+                foreach($file_as_array as $f) {
 
-            $file_as_array = file($this->wire('config')->paths->root . $subtitles_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            $v->transcript = '';
-            foreach ($file_as_array as $f) {
+                    // Find lines containing "-->"
+                    $start_time = false;
+                    if(preg_match("/^(\d{2}:\d{2}:[\d\.]+) --> \d{2}:\d{2}:[\d\.]+$/", $f, $match)) {
+                        $start_time = explode('-->', $f);
+                        $start_time = $start_time[0];
+                    }
 
-                // Find lines containing "-->"
-                $start_time = false;
-                if(preg_match("/^(\d{2}:\d{2}:[\d\.]+) --> \d{2}:\d{2}:[\d\.]+$/", $f, $match)) {
-                    $start_time = explode('-->', $f);
-                    $start_time = $start_time[0];
+                    // It's a line of the file that doesn't include a timestamp, so it's caption text. Ignore header of file which includes the word 'WEBVTT'
+                    if(!$start_time && (!strpos($f, 'WEBVTT')) ) {
+                        $v->transcript .= ' ' . $f . ' ';
+                    }
+
                 }
-
-                // It's a line of the file that doesn't include a timestamp, so it's caption text. Ignore header of file which includes the word 'WEBVTT'
-                if (!$start_time && (!strpos($f, 'WEBVTT')) ) {
-                    $v->transcript .= ' ' . $f . ' ';
-                }
-
             }
 
             $posterPath = $this->page->filesManager()->path() . basename($v->poster);

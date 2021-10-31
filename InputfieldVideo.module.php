@@ -17,7 +17,7 @@ class InputfieldVideo extends InputfieldFile {
         return array(
             'title' => __('Video Inputfield', __FILE__),
             'summary' => __('Inputfield for uploading video files and creating poster images.', __FILE__),
-            'version' => '0.2.0',
+            'version' => '0.2.1',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/4580-video-fieldtype/',
             'icon'     => 'file-video-o',
