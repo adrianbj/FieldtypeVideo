@@ -17,7 +17,7 @@ class InputfieldVideo extends InputfieldFile {
         return array(
             'title' => __('Video Inputfield', __FILE__),
             'summary' => __('Inputfield for uploading video files and creating poster images.', __FILE__),
-            'version' => '0.2.1',
+            'version' => '0.2.2',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/4580-video-fieldtype/',
             'icon'     => 'file-video-o',
@@ -111,7 +111,7 @@ class InputfieldVideo extends InputfieldFile {
 
         $duration = '';
         $media = new ffmpeg_movie ($video->filename);
-        $duration = gmdate("H:i:s", $media->getDuration());
+        $duration = gmdate("H:i:s", intval($media->getDuration()));
 
         $displayName = $this->getDisplayBasename($pagefile);
 		$deleteLabel = $this->labels['delete'];

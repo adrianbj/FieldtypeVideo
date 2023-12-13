@@ -5,7 +5,7 @@ namespace Char0n\FFMpegPHP;
 /**
  * Represents one frame from the movie.
  */
-class Frame implements \Serializable
+class Frame
 {
 
     protected static $EX_CODE_NO_VALID_RESOURCE = 334563;
@@ -48,7 +48,7 @@ class Frame implements \Serializable
      */
     public function __construct($gdImage, $pts = 0.0)
     {
-        if (!(is_resource($gdImage) && 'gd' === get_resource_type($gdImage))) {
+        if ((!(is_resource($gdImage) && 'gd' === get_resource_type($gdImage))) && !($gdImage instanceof \GdImage)) {
             throw new \UnexpectedValueException(
                 'Param given by constructor is not valid gd resource',
                 self::$EX_CODE_NO_VALID_RESOURCE
@@ -70,7 +70,7 @@ class Frame implements \Serializable
     protected function gdImageToBinaryData($gdImage)
     {
         ob_start();
-        imagegd2($gdImage);
+        imagejpeg($gdImage, null, 100);
 
         return ob_get_clean();
     }
@@ -198,34 +198,32 @@ class Frame implements \Serializable
     /**
      * Return string representation of a Frame.
      *
-     * @return string The string representation of the object or null.
+     * @return array The string representation of the object or null.
      */
-    public function serialize()
+    public function __serialize()
     {
-        $data = [
+        return [
             $this->gdImageData,
             $this->pts,
             $this->width,
             $this->height,
         ];
-
-        return serialize($data);
     }
 
     /**
      * Constructs the Frame from serialized data.
      *
-     * @param string $serialized The string representation of Frame instance.
+     * @param array $serialized The string representation of Frame instance.
      *
      * @return void
      */
-    public function unserialize($serialized)
+    public function __unserialize($serialized)
     {
         list(
             $this->gdImageData,
             $this->pts,
             $this->width,
             $this->height
-        ) = unserialize($serialized);
+        ) = $serialized;
     }
 }
