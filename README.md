@@ -7,7 +7,7 @@ Processwire field type for storing video files and automatically creating poster
 * Video is available via: $page->video_field->url
 * Module automatically creates a poster image of the video on upload and makes this available via: $page->video_field->poster
 * Shows the duration of the video on the title bar, next to the filesize
-* Stores SRT files for subtitles accessed via: $page->video_field->subtitles
+* Stores VTT files for subtitles accessed via: $page->video_field->subtitles
 * Formats a transcript from the subtitles, accessed via: $page->video_field->transcript
 
 The video can be automatically rendered on the frontend with the `play()` method via the `<video>` tag. The exact settings used can be set in the module settings like this:
@@ -18,7 +18,7 @@ The video can be automatically rendered on the frontend with the `play()` method
 
 ### Usage
 
-Basic usage only requires setting up a field with this new video fieldtype. Simply upload a video and if desired enter subtitles in SRT format.
+Basic usage only requires setting up a field with this new video fieldtype. Simply upload a video and if desired enter subtitles in VTT format.
 
 #### Additional settings
 
@@ -36,7 +36,6 @@ The module requires ffmpeg and ffmpeg-php, although I can make the latter option
 
 * Multi language versions of subtitles
 * Support for uploading multiple formats of the same video (mp4, webm, etc) and/or automated video format conversion
-* Integrate mediaelementjs into the module so users can enter shortcodes in RTE fields to display videos where they want
 
 
 ### Discussion
