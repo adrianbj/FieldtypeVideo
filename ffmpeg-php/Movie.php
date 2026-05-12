@@ -239,7 +239,7 @@ class Movie
      *
      * @throws \Exception
      */
-    public function __construct($moviePath, OutputProvider $outputProvider = null, $ffmpegBinary = 'ffmpeg')
+    public function __construct($moviePath, ?OutputProvider $outputProvider = null, $ffmpegBinary = 'ffmpeg')
     {
         $this->movieFile = $moviePath;
         $this->frameNumber = 0;
@@ -701,7 +701,7 @@ class Movie
      */
     public function hasAudio()
     {
-        return (boolean)preg_match(self::$REGEX_HAS_AUDIO, $this->output);
+        return (bool)preg_match(self::$REGEX_HAS_AUDIO, $this->output);
     }
 
     /**
@@ -711,7 +711,7 @@ class Movie
      */
     public function hasVideo()
     {
-        return (boolean)preg_match(self::$REGEX_HAS_VIDEO, $this->output);
+        return (bool)preg_match(self::$REGEX_HAS_VIDEO, $this->output);
     }
 
     /**
@@ -860,7 +860,7 @@ class Movie
         }
 
         $frame = new Frame($gdImage, $frameTime);
-        imagedestroy($gdImage);
+        if(PHP_VERSION_ID < 80000) imagedestroy($gdImage);
 
         return $frame;
     }

@@ -1,4 +1,4 @@
-<?php
+<?php namespace ProcessWire;
 
 /**
  * ProcessWire Video Fieldtype
@@ -17,7 +17,7 @@ class FieldtypeVideo extends FieldtypeFile implements Module, ConfigurableModule
         return array(
             'title' => __('Video', __FILE__),
             'summary' => __('Fieldtype for uploading video files and creating poster images.', __FILE__),
-            'version' => '0.2.2',
+            'version' => '0.2.3',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/4580-video-fieldtype/',
             'installs' => 'InputfieldVideo',
@@ -213,24 +213,28 @@ class FieldtypeVideo extends FieldtypeFile implements Module, ConfigurableModule
         if($tagsAction === 'add') {
             // add tags field
             try {
-                $this->db->query("ALTER TABLE `{$field->table}` ADD tags $schemaTags");
-                $this->db->query("ALTER TABLE `{$field->table}` ADD $schemaTagsIndex");
+                $database = $this->wire('database');
+                $table = $database->escapeTable($field->table);
+                $database->exec("ALTER TABLE `$table` ADD tags $schemaTags");
+                $database->exec("ALTER TABLE `$table` ADD $schemaTagsIndex");
                 $field->fileSchema = $field->fileSchema | self::fileSchemaTags;
                 $field->save();
                 $this->message("Added tags to DB schema for '{$field->name}'");
-            } catch(Exception $e) {
+            } catch(\Exception $e) {
                 $this->error("Error adding tags to '{$field->name}' schema");
             }
 
         } else if($tagsAction === 'remove') {
             // remove tags field
             try {
-                $this->db->query("ALTER TABLE `{$field->table}` DROP INDEX tags");
-                $this->db->query("ALTER TABLE `{$field->table}` DROP tags");
+                $database = $this->wire('database');
+                $table = $database->escapeTable($field->table);
+                $database->exec("ALTER TABLE `$table` DROP INDEX tags");
+                $database->exec("ALTER TABLE `$table` DROP tags");
                 $field->fileSchema = $field->fileSchema & ~self::fileSchemaTags;
                 $field->save();
                 $this->message("Dropped tags from DB schema for '{$field->name}'");
-            } catch(Exception $e) {
+            } catch(\Exception $e) {
                 $this->error("Error dropping tags from '{$field->name}' schema");
             }
         }

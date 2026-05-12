@@ -250,7 +250,7 @@ class AnimatedGif
             return false;
         }
 
-        return (boolean)file_put_contents($this->outFilePath, $this->getAnimation(), LOCK_EX);
+        return (bool)file_put_contents($this->outFilePath, $this->getAnimation(), LOCK_EX);
     }
 
     /**

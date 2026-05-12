@@ -161,8 +161,10 @@ class Frame
         $this->gdImageData = $this->gdImageToBinaryData($resizedImage);
         $this->width = imagesx($resizedImage);
         $this->height = imagesy($resizedImage);
-        imagedestroy($gdImage);
-        imagedestroy($resizedImage);
+        if(PHP_VERSION_ID < 80000) {
+            imagedestroy($gdImage);
+            imagedestroy($resizedImage);
+        }
     }
 
     /**
