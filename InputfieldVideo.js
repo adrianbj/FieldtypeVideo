@@ -18,4 +18,11 @@
         initImagePickers($(this));
     });
 
+    // InputfieldFile inserts uploaded item markup directly and only triggers
+    // `reloaded` when that markup contains nested Inputfields. The poster
+    // picker is direct item markup, so initialize it on upload completion.
+    $(document).on('AjaxUploadDone', '.InputfieldFileList', function() {
+        initImagePickers($(this));
+    });
+
 })(jQuery);

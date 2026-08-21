@@ -17,7 +17,7 @@ class FieldtypeVideo extends FieldtypeFile implements Module, ConfigurableModule
         return array(
             'title' => __('Video', __FILE__),
             'summary' => __('Fieldtype for uploading video files and creating poster images.', __FILE__),
-            'version' => '0.2.3',
+            'version' => '0.2.4',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/4580-video-fieldtype/',
             'installs' => 'InputfieldVideo',

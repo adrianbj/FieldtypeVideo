@@ -17,7 +17,7 @@ class InputfieldVideo extends InputfieldFile {
         return array(
             'title' => __('Video Inputfield', __FILE__),
             'summary' => __('Inputfield for uploading video files and creating poster images.', __FILE__),
-            'version' => '0.2.3',
+            'version' => '0.2.4',
             'author' => 'Adrian Jones',
             'href' => 'https://processwire.com/talk/topic/4580-video-fieldtype/',
             'icon'     => 'file-video-o',
@@ -40,23 +40,24 @@ class InputfieldVideo extends InputfieldFile {
     }
 
 
-    public function ___render() {
+    public function renderReady($parent = null, $renderValueMode = false) {
 
-        // version number
+        $config = $this->wire('config');
+        $modules = $this->wire('modules');
         $moduleInfo = $this->getModuleInfo();
-        $v = $moduleInfo['version'];
-        $modUrl = $this->wire('config')->urls->siteModules . 'FieldtypeVideo/';
+        $version = $moduleInfo['version'];
+        $moduleUrl = $config->urls->siteModules . 'FieldtypeVideo/';
 
-        // add styles and scripts
-        $this->wire('config')->scripts->add($modUrl . 'image-picker/image-picker.min.js?v=' . $v);
-        $this->wire('config')->styles->add($modUrl . 'image-picker/image-picker.css?v=' . $v);
+        // These must be loaded during the initial renderReady pass. Repeater
+        // fields preload assets before their inputfields are rendered by AJAX.
+        $config->scripts->add($moduleUrl . 'image-picker/image-picker.min.js?v=' . $version);
+        $config->styles->add($moduleUrl . 'image-picker/image-picker.css?v=' . $version);
 
-        $this->wire('config')->scripts->add($modUrl . 'InputfieldVideo.js?v=' . $v);
-        $this->wire('config')->styles->add($modUrl . 'InputfieldVideo.css?v=' . $v);
+        // InputfieldVideo extends InputfieldFile, so its parent assets are also
+        // required. parent::renderReady() loads InputfieldVideo.js and CSS.
+        $modules->loadModuleFileAssets('InputfieldFile');
 
-        $this->wire('config')->scripts->add($this->wire('config')->urls->InputfieldFile . "InputfieldFile.js");
-        $this->wire('config')->styles->add($this->wire('config')->urls->InputfieldFile . "InputfieldFile.css");
-        return parent::___render();
+        return parent::renderReady($parent, $renderValueMode);
     }
 
 
